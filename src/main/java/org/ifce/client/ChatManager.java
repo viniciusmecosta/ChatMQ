@@ -14,6 +14,7 @@ public class ChatManager {
 
     private final String clientName;
     private final List<String> contacts;
+    private final List<Message> pendingMessages;
     private MessageBroker broker;
     private ChatClientImpl chatClient;
     private boolean isOnline;
@@ -21,6 +22,7 @@ public class ChatManager {
     public ChatManager(String clientName) {
         this.clientName = clientName;
         this.contacts = new ArrayList<>();
+        this.pendingMessages = new ArrayList<>();
         this.isOnline = false;
     }
 
@@ -35,6 +37,11 @@ public class ChatManager {
         if (!isOnline && broker != null) {
             broker.registerClient(clientName, chatClient);
             isOnline = true;
+
+            for (Message msg : pendingMessages) {
+                broker.sendMessage(msg);
+            }
+            pendingMessages.clear();
         }
     }
 
@@ -45,10 +52,15 @@ public class ChatManager {
         }
     }
 
-    public void sendMessage(String receiver, String content) throws Exception {
-        if (broker != null) {
-            Message message = new Message(clientName, receiver, content, LocalDateTime.now());
+    public boolean sendMessage(String receiver, String content) throws Exception {
+        Message message = new Message(clientName, receiver, content, LocalDateTime.now());
+
+        if (isOnline && broker != null) {
             broker.sendMessage(message);
+            return true;
+        } else {
+            pendingMessages.add(message);
+            return false;
         }
     }
 

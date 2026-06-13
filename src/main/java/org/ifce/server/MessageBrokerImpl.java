@@ -1,79 +1,93 @@
 package org.ifce.server;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ifce.model.Message;
 import org.ifce.rmi.ChatClient;
 import org.ifce.rmi.MessageBroker;
 
+import jakarta.jms.*;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MessageBrokerImpl extends UnicastRemoteObject implements MessageBroker {
 
-    private final Map<String, ChatClient> onlineClients;
-    private final Map<String, Queue<Message>> offlineQueues;
+    private final Connection connection;
+    private final Session session;
+    private final Map<String, MessageConsumer> activeConsumers;
 
-    public MessageBrokerImpl() throws RemoteException {
+    public MessageBrokerImpl() throws Exception {
         super();
-        this.onlineClients = new ConcurrentHashMap<>();
-        this.offlineQueues = new ConcurrentHashMap<>();
+        this.activeConsumers = new ConcurrentHashMap<>();
+
+        ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+        factory.setTrustAllPackages(true);
+
+        this.connection = factory.createConnection();
+        this.connection.start();
+        this.session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
     }
 
     @Override
     public void createQueue(String clientName) throws RemoteException {
-        offlineQueues.putIfAbsent(clientName, new ConcurrentLinkedQueue<>());
+        try {
+            session.createQueue(clientName);
+        } catch (JMSException e) {
+            throw new RemoteException("Erro ao criar fila no ActiveMQ", e);
+        }
     }
 
     @Override
     public void registerClient(String clientName, ChatClient client) throws RemoteException {
-        onlineClients.put(clientName, client);
-        deliverOfflineMessages(clientName, client);
+        try {
+            Queue queue = session.createQueue(clientName);
+            MessageConsumer consumer = session.createConsumer(queue);
+
+            consumer.setMessageListener(jmsMessage -> {
+                try {
+                    if (jmsMessage instanceof ObjectMessage objMsg) {
+                        Message chatMessage = (Message) objMsg.getObject();
+                        client.receiveMessage(chatMessage);
+                        jmsMessage.acknowledge();
+                    }
+                } catch (RemoteException e) {
+                    try { unregisterClient(clientName); } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            activeConsumers.put(clientName, consumer);
+        } catch (JMSException e) {
+            throw new RemoteException("Erro ao registrar cliente no ActiveMQ", e);
+        }
     }
 
     @Override
     public void unregisterClient(String clientName) throws RemoteException {
-        onlineClients.remove(clientName);
+        MessageConsumer consumer = activeConsumers.remove(clientName);
+        if (consumer != null) {
+            try {
+                consumer.close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public void sendMessage(Message message) throws RemoteException {
-        String receiver = message.receiver();
-        ChatClient client = onlineClients.get(receiver);
+        try {
+            Queue queue = session.createQueue(message.receiver());
+            MessageProducer producer = session.createProducer(queue);
+            producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
-        if (client != null) {
-            try {
-                client.receiveMessage(message);
-            } catch (RemoteException e) {
-                unregisterClient(receiver);
-                queueMessage(receiver, message);
-            }
-        } else {
-            queueMessage(receiver, message);
-        }
-    }
-
-    private void queueMessage(String receiver, Message message) {
-        Queue<Message> queue = offlineQueues.get(receiver);
-        if (queue != null) {
-            queue.add(message);
-        }
-    }
-
-    private void deliverOfflineMessages(String clientName, ChatClient client) {
-        Queue<Message> queue = offlineQueues.get(clientName);
-        if (queue != null) {
-            while (!queue.isEmpty()) {
-                Message message = queue.poll();
-                try {
-                    client.receiveMessage(message);
-                } catch (RemoteException e) {
-                    queueMessage(clientName, message);
-                    break;
-                }
-            }
+            ObjectMessage objMsg = session.createObjectMessage(message);
+            producer.send(objMsg);
+            producer.close();
+        } catch (JMSException e) {
+            throw new RemoteException("Erro ao enviar mensagem via ActiveMQ", e);
         }
     }
 }

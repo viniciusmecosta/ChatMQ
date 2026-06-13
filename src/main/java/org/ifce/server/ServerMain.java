@@ -11,7 +11,8 @@ public class ServerMain {
             MessageBroker broker = new MessageBrokerImpl();
             Registry registry = LocateRegistry.createRegistry(1099);
             registry.rebind("MessageBroker", broker);
-            System.out.println("Servidor de mensagens iniciado.");
+
+            System.out.println("Servidor RMI iniciado. Conectado ao ActiveMQ externo.");
         } catch (Exception e) {
             e.printStackTrace();
         }

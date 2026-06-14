@@ -6,8 +6,6 @@ import org.ifce.model.Message;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +40,6 @@ public class ChatWindow extends JFrame {
     public ChatWindow(ChatManager chatManager) {
         this.chatManager = chatManager;
         this.contactListModel = new DefaultListModel<>();
-        this.contactList = new JList<>(contactListModel);
         this.cardLayout = new CardLayout();
         this.chatCards = new JPanel(cardLayout);
         this.chatPanels = new HashMap<>();
@@ -72,14 +69,33 @@ public class ChatWindow extends JFrame {
             inputBgColor = Color.WHITE;
         }
 
-        this.toggleStatusButton = createInteractiveButton("Offline", new Color(108, 117, 125), new Color(90, 98, 104));
-        this.sendButton = createInteractiveButton("Enviar", new Color(0, 168, 132), new Color(0, 140, 110));
+        this.contactList = new JList<>(contactListModel) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (getModel().getSize() == 0) {
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.setColor(textSubColor);
+                    g2d.setFont(new Font("SansSerif", Font.ITALIC, 14));
+                    String text = "Nenhum contato";
+                    FontMetrics fm = g2d.getFontMetrics();
+                    int x = (getWidth() - fm.stringWidth(text)) / 2;
+                    int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                    g2d.drawString(text, x, y);
+                    g2d.dispose();
+                }
+            }
+        };
+
+        this.toggleStatusButton = createSimpleButton("Offline", new Color(108, 117, 125));
+        this.sendButton = createSimpleButton("Enviar", new Color(0, 168, 132));
 
         setupUI();
         setupActions();
     }
 
-    private JButton createInteractiveButton(String text, Color baseColor, Color hoverColor) {
+    private JButton createSimpleButton(String text, Color baseColor) {
         JButton btn = new JButton(text);
         btn.setBackground(baseColor);
         btn.setForeground(Color.WHITE);
@@ -88,30 +104,6 @@ public class ChatWindow extends JFrame {
         btn.setOpaque(true);
         btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        btn.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (btn.isEnabled()) {
-                    if (btn == toggleStatusButton) {
-                        btn.setBackground(btn.getText().equals("Online") ? new Color(0, 140, 110) : new Color(90, 98, 104));
-                    } else {
-                        btn.setBackground(hoverColor);
-                    }
-                }
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (btn.isEnabled()) {
-                    if (btn == toggleStatusButton) {
-                        btn.setBackground(btn.getText().equals("Online") ? new Color(0, 168, 132) : new Color(108, 117, 125));
-                    } else {
-                        btn.setBackground(baseColor);
-                    }
-                }
-            }
-        });
         return btn;
     }
 
@@ -136,6 +128,7 @@ public class ChatWindow extends JFrame {
 
         JPanel centerSidebar = new JPanel(new BorderLayout());
         centerSidebar.setBackground(bgAppColor);
+        centerSidebar.setBorder(new EmptyBorder(0, 15, 0, 15));
 
         JLabel contactsTitle = new JLabel("Contatos", SwingConstants.CENTER);
         contactsTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -163,18 +156,18 @@ public class ChatWindow extends JFrame {
         });
 
         JScrollPane listScroll = new JScrollPane(contactList);
-        listScroll.setBorder(BorderFactory.createEmptyBorder());
+        listScroll.setBorder(BorderFactory.createLineBorder(isDarkTheme ? new Color(60, 60, 60) : new Color(200, 200, 200)));
         listScroll.getVerticalScrollBar().setUnitIncrement(16);
         centerSidebar.add(listScroll, BorderLayout.CENTER);
 
         JPanel contactActionPanel = new JPanel(new GridLayout(1, 2, 10, 0));
-        contactActionPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        contactActionPanel.setBorder(new EmptyBorder(15, 0, 15, 0));
         contactActionPanel.setBackground(bgAppColor);
 
-        JButton btnAdd = createInteractiveButton("+", new Color(40, 167, 69), new Color(30, 135, 55));
+        JButton btnAdd = createSimpleButton("+", new Color(40, 167, 69));
         btnAdd.setFont(new Font("SansSerif", Font.BOLD, 22));
 
-        JButton btnRemove = createInteractiveButton("-", new Color(108, 117, 125), new Color(90, 98, 104));
+        JButton btnRemove = createSimpleButton("-", new Color(108, 117, 125));
         btnRemove.setFont(new Font("SansSerif", Font.BOLD, 22));
 
         contactActionPanel.add(btnAdd);
@@ -285,7 +278,7 @@ public class ChatWindow extends JFrame {
                 toggleStatusButton.setBackground(new Color(0, 168, 132));
 
                 for (JLabel statusLabel : pendingStatusLabels) {
-                    statusLabel.setText("»");
+                    statusLabel.setText(">");
                 }
                 pendingStatusLabels.clear();
             }

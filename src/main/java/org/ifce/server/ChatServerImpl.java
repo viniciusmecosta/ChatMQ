@@ -1,11 +1,11 @@
 package org.ifce.server;
 
+import jakarta.jms.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ifce.model.Message;
 import org.ifce.rmi.ChatClient;
 import org.ifce.rmi.ChatServer;
 
-import jakarta.jms.*;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Map;
@@ -52,7 +52,10 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
                         jmsMessage.acknowledge();
                     }
                 } catch (RemoteException e) {
-                    try { unregisterClient(clientName); } catch (Exception ignored) {}
+                    try {
+                        unregisterClient(clientName);
+                    } catch (Exception ignored) {
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

@@ -1,6 +1,7 @@
 package org.ifce.rmi;
 
 import org.ifce.model.Message;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 

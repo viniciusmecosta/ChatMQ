@@ -274,7 +274,7 @@ public class ChatWindow extends JFrame {
                 toggleStatusButton.setBackground(new Color(0, 168, 132));
 
                 for (JLabel statusLabel : pendingStatusLabels) {
-                    statusLabel.setText("✓");
+                    statusLabel.setText("»");
                 }
                 pendingStatusLabels.clear();
             }
@@ -366,8 +366,8 @@ public class ChatWindow extends JFrame {
             footerPanel.add(timeLabel);
 
             if (isMe) {
-                JLabel statusLabel = new JLabel(sentImmediately ? "✓" : "🕒");
-                statusLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+                JLabel statusLabel = new JLabel(sentImmediately ? "»" : "...");
+                statusLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
                 statusLabel.setForeground(textSubColor);
                 if (!sentImmediately) {
                     pendingStatusLabels.add(statusLabel);

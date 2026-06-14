@@ -1,6 +1,6 @@
 package org.ifce.server;
 
-import org.ifce.rmi.MessageBroker;
+import org.ifce.rmi.ChatServer;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -8,11 +8,11 @@ import java.rmi.registry.Registry;
 public class ServerMain {
     public static void main(String[] args) {
         try {
-            MessageBroker broker = new MessageBrokerImpl();
+            ChatServer server = new ChatServerImpl();
             Registry registry = LocateRegistry.createRegistry(1099);
-            registry.rebind("MessageBroker", broker);
+            registry.rebind("ChatServer", server);
 
-            System.out.println("Servidor RMI iniciado. Conectado ao ActiveMQ externo.");
+            System.out.println("Servidor iniciado.");
         } catch (Exception e) {
             e.printStackTrace();
         }

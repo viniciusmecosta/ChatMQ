@@ -69,25 +69,7 @@ public class ChatWindow extends JFrame {
             inputBgColor = Color.WHITE;
         }
 
-        this.contactList = new JList<>(contactListModel) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (getModel().getSize() == 0) {
-                    Graphics2D g2d = (Graphics2D) g.create();
-                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2d.setColor(textSubColor);
-                    g2d.setFont(new Font("SansSerif", Font.ITALIC, 14));
-                    String text = "Nenhum contato";
-                    FontMetrics fm = g2d.getFontMetrics();
-                    int x = (getWidth() - fm.stringWidth(text)) / 2;
-                    int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
-                    g2d.drawString(text, x, y);
-                    g2d.dispose();
-                }
-            }
-        };
-
+        this.contactList = new JList<>(contactListModel);
         this.toggleStatusButton = createSimpleButton("Offline", new Color(108, 117, 125));
         this.sendButton = createSimpleButton("Enviar", new Color(0, 168, 132));
 
@@ -165,10 +147,7 @@ public class ChatWindow extends JFrame {
         contactActionPanel.setBackground(bgAppColor);
 
         JButton btnAdd = createSimpleButton("+", new Color(40, 167, 69));
-        btnAdd.setFont(new Font("SansSerif", Font.BOLD, 22));
-
         JButton btnRemove = createSimpleButton("-", new Color(108, 117, 125));
-        btnRemove.setFont(new Font("SansSerif", Font.BOLD, 22));
 
         contactActionPanel.add(btnAdd);
         contactActionPanel.add(btnRemove);
@@ -182,10 +161,6 @@ public class ChatWindow extends JFrame {
 
         JPanel emptyPanel = new JPanel(new GridBagLayout());
         emptyPanel.setBackground(bgChatColor);
-        JLabel emptyLabel = new JLabel("Selecione um contato para iniciar a conversa");
-        emptyLabel.setForeground(textSubColor);
-        emptyLabel.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        emptyPanel.add(emptyLabel);
         chatCards.add(emptyPanel, "EMPTY");
 
         mainChatArea.add(chatCards, BorderLayout.CENTER);
@@ -288,10 +263,29 @@ public class ChatWindow extends JFrame {
     }
 
     private void addContact() {
-        String name = JOptionPane.showInputDialog(this, "Nome do contato:");
-        if (name != null && !name.trim().isEmpty()) {
-            chatManager.addContact(name.trim().toLowerCase());
-            updateContactList();
+        JPanel inputPanel = new JPanel(new BorderLayout(0, 5));
+        inputPanel.add(new JLabel("Nome do contato:"), BorderLayout.NORTH);
+        JTextField nameField = new JTextField();
+        nameField.setPreferredSize(new Dimension(250, 35));
+        nameField.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        inputPanel.add(nameField, BorderLayout.CENTER);
+
+        Object[] options = {"Adicionar"};
+        int result = JOptionPane.showOptionDialog(this, inputPanel, "Novo Contato",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
+                null, options, options[0]);
+
+        if (result == 0) {
+            String name = nameField.getText();
+            if (name != null && !name.trim().isEmpty()) {
+                String normalizedName = name.trim().toLowerCase();
+                if (normalizedName.equals(chatManager.getClientName())) {
+                    JOptionPane.showMessageDialog(this, "Você não pode enviar mensagens para si mesmo.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    chatManager.addContact(normalizedName);
+                    updateContactList();
+                }
+            }
         }
     }
 
@@ -326,6 +320,7 @@ public class ChatWindow extends JFrame {
 
     public void displayMessage(Message message) {
         String sender = message.sender();
+        if (sender.equals(chatManager.getClientName())) return;
 
         if (!chatPanels.containsKey(sender)) {
             chatManager.addContact(sender);

@@ -1,7 +1,7 @@
 package org.ifce.client;
 
 import org.ifce.model.Message;
-import org.ifce.rmi.MessageBroker;
+import org.ifce.rmi.ChatServer;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -15,7 +15,7 @@ public class ChatManager {
     private final String clientName;
     private final List<String> contacts;
     private final List<Message> pendingMessages;
-    private MessageBroker broker;
+    private ChatServer server;
     private ChatClientImpl chatClient;
     private boolean isOnline;
 
@@ -28,26 +28,26 @@ public class ChatManager {
 
     public void connect(String host, int port, Consumer<Message> onMessageReceived) throws Exception {
         Registry registry = LocateRegistry.getRegistry(host, port);
-        this.broker = (MessageBroker) registry.lookup("MessageBroker");
+        this.server = (ChatServer) registry.lookup("ChatServer");
         this.chatClient = new ChatClientImpl(onMessageReceived);
-        this.broker.createQueue(clientName);
+        this.server.createQueue(clientName);
     }
 
     public void goOnline() throws Exception {
-        if (!isOnline && broker != null) {
-            broker.registerClient(clientName, chatClient);
+        if (!isOnline && server != null) {
+            server.registerClient(clientName, chatClient);
             isOnline = true;
 
             for (Message msg : pendingMessages) {
-                broker.sendMessage(msg);
+                server.sendMessage(msg);
             }
             pendingMessages.clear();
         }
     }
 
     public void goOffline() throws Exception {
-        if (isOnline && broker != null) {
-            broker.unregisterClient(clientName);
+        if (isOnline && server != null) {
+            server.unregisterClient(clientName);
             isOnline = false;
         }
     }
@@ -55,8 +55,8 @@ public class ChatManager {
     public boolean sendMessage(String receiver, String content) throws Exception {
         Message message = new Message(clientName, receiver.toLowerCase(), content, LocalDateTime.now());
 
-        if (isOnline && broker != null) {
-            broker.sendMessage(message);
+        if (isOnline && server != null) {
+            server.sendMessage(message);
             return true;
         } else {
             pendingMessages.add(message);
@@ -66,7 +66,7 @@ public class ChatManager {
 
     public void addContact(String contactName) {
         String normalized = contactName.toLowerCase();
-        if (!contacts.contains(normalized)) {
+        if (!normalized.equals(clientName) && !contacts.contains(normalized)) {
             contacts.add(normalized);
         }
     }

@@ -3,7 +3,7 @@ package org.ifce.server;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ifce.model.Message;
 import org.ifce.rmi.ChatClient;
-import org.ifce.rmi.MessageBroker;
+import org.ifce.rmi.ChatServer;
 
 import jakarta.jms.*;
 import java.rmi.RemoteException;
@@ -11,13 +11,13 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class MessageBrokerImpl extends UnicastRemoteObject implements MessageBroker {
+public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
 
     private final Connection connection;
     private final Session session;
     private final Map<String, MessageConsumer> activeConsumers;
 
-    public MessageBrokerImpl() throws Exception {
+    public ChatServerImpl() throws Exception {
         super();
         this.activeConsumers = new ConcurrentHashMap<>();
 
@@ -59,6 +59,7 @@ public class MessageBrokerImpl extends UnicastRemoteObject implements MessageBro
             });
 
             activeConsumers.put(clientName, consumer);
+            System.out.println("Cliente conectado: " + clientName);
         } catch (JMSException e) {
             throw new RemoteException("Erro ao registrar cliente no ActiveMQ", e);
         }

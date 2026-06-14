@@ -6,29 +6,31 @@ Projeto de Middleware Orientado a Mensagens simulando um sistema de troca de men
 
 * Java 21 ou superior
 * Maven
+* ActiveMQ
 
-## Como compilar
+## Compilação
 
-No terminal, acesse a pasta raiz do projeto e execute um dos comandos abaixo para baixar as dependências e gerar os arquivos executáveis separados na pasta `target`:
+Na raiz do projeto, execute o comando abaixo para compilar e gerar os executáveis:
 
-mvn clean package
-
-Ou:
-
+```bash
 mvn clean install
 
-## Como executar
+```
 
-Após a compilação, os executáveis individuais estarão disponíveis na pasta `target`. Eles podem ser executados diretamente utilizando o comando `java -jar`.
+## Execução
 
-### Iniciar o Servidor
+**Importante:** O servidor ActiveMQ deve estar rodando
 
-Abra um terminal na raiz do projeto e execute:
+**Servidor:**
 
+```bash
 java -jar target/server.jar
 
-### Iniciar o Cliente
+```
 
-Abra um novo terminal na raiz do projeto e execute:
+**Cliente:**
 
+```bash
 java -jar target/client.jar
+
+```

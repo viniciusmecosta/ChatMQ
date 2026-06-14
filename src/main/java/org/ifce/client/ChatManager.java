@@ -53,7 +53,7 @@ public class ChatManager {
     }
 
     public boolean sendMessage(String receiver, String content) throws Exception {
-        Message message = new Message(clientName, receiver, content, LocalDateTime.now());
+        Message message = new Message(clientName, receiver.toLowerCase(), content, LocalDateTime.now());
 
         if (isOnline && broker != null) {
             broker.sendMessage(message);
@@ -65,13 +65,14 @@ public class ChatManager {
     }
 
     public void addContact(String contactName) {
-        if (!contacts.contains(contactName)) {
-            contacts.add(contactName);
+        String normalized = contactName.toLowerCase();
+        if (!contacts.contains(normalized)) {
+            contacts.add(normalized);
         }
     }
 
     public void removeContact(String contactName) {
-        contacts.remove(contactName);
+        contacts.remove(contactName.toLowerCase());
     }
 
     public List<String> getContacts() {

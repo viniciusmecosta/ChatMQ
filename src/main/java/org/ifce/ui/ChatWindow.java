@@ -134,6 +134,15 @@ public class ChatWindow extends JFrame {
         topSidebar.add(toggleStatusButton, BorderLayout.CENTER);
         sidebar.add(topSidebar, BorderLayout.NORTH);
 
+        JPanel centerSidebar = new JPanel(new BorderLayout());
+        centerSidebar.setBackground(bgAppColor);
+
+        JLabel contactsTitle = new JLabel("Contatos", SwingConstants.CENTER);
+        contactsTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
+        contactsTitle.setForeground(textMainColor);
+        contactsTitle.setBorder(new EmptyBorder(10, 0, 10, 0));
+        centerSidebar.add(contactsTitle, BorderLayout.NORTH);
+
         contactList.setBackground(bgAppColor);
         contactList.setForeground(textMainColor);
         contactList.setSelectionBackground(isDarkTheme ? new Color(42, 57, 66) : new Color(235, 235, 235));
@@ -156,22 +165,23 @@ public class ChatWindow extends JFrame {
         JScrollPane listScroll = new JScrollPane(contactList);
         listScroll.setBorder(BorderFactory.createEmptyBorder());
         listScroll.getVerticalScrollBar().setUnitIncrement(16);
-        sidebar.add(listScroll, BorderLayout.CENTER);
+        centerSidebar.add(listScroll, BorderLayout.CENTER);
 
         JPanel contactActionPanel = new JPanel(new GridLayout(1, 2, 10, 0));
         contactActionPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         contactActionPanel.setBackground(bgAppColor);
 
-        JButton btnAdd = createInteractiveButton("+ Contato", new Color(40, 167, 69), new Color(30, 135, 55));
-        btnAdd.setFont(new Font("SansSerif", Font.BOLD, 13));
+        JButton btnAdd = createInteractiveButton("+", new Color(40, 167, 69), new Color(30, 135, 55));
+        btnAdd.setFont(new Font("SansSerif", Font.BOLD, 22));
 
-        JButton btnRemove = createInteractiveButton("- Remover", new Color(108, 117, 125), new Color(90, 98, 104));
-        btnRemove.setFont(new Font("SansSerif", Font.BOLD, 13));
+        JButton btnRemove = createInteractiveButton("-", new Color(108, 117, 125), new Color(90, 98, 104));
+        btnRemove.setFont(new Font("SansSerif", Font.BOLD, 22));
 
         contactActionPanel.add(btnAdd);
         contactActionPanel.add(btnRemove);
-        sidebar.add(contactActionPanel, BorderLayout.SOUTH);
+        centerSidebar.add(contactActionPanel, BorderLayout.SOUTH);
 
+        sidebar.add(centerSidebar, BorderLayout.CENTER);
         add(sidebar, BorderLayout.WEST);
 
         JPanel mainChatArea = new JPanel(new BorderLayout());
@@ -216,7 +226,8 @@ public class ChatWindow extends JFrame {
         toggleStatusButton.addActionListener(e -> toggleOnlineStatus());
 
         JPanel sidebar = (JPanel) getContentPane().getComponent(0);
-        JPanel contactActionPanel = (JPanel) sidebar.getComponent(2);
+        JPanel centerSidebar = (JPanel) sidebar.getComponent(1);
+        JPanel contactActionPanel = (JPanel) centerSidebar.getComponent(2);
         ((JButton) contactActionPanel.getComponent(0)).addActionListener(e -> addContact());
         ((JButton) contactActionPanel.getComponent(1)).addActionListener(e -> removeContact());
 
@@ -286,7 +297,7 @@ public class ChatWindow extends JFrame {
     private void addContact() {
         String name = JOptionPane.showInputDialog(this, "Nome do contato:");
         if (name != null && !name.trim().isEmpty()) {
-            chatManager.addContact(name.trim());
+            chatManager.addContact(name.trim().toLowerCase());
             updateContactList();
         }
     }
@@ -366,7 +377,7 @@ public class ChatWindow extends JFrame {
             footerPanel.add(timeLabel);
 
             if (isMe) {
-                JLabel statusLabel = new JLabel(sentImmediately ? "»" : "...");
+                JLabel statusLabel = new JLabel(sentImmediately ? ">" : "...");
                 statusLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
                 statusLabel.setForeground(textSubColor);
                 if (!sentImmediately) {

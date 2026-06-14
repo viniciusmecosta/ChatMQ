@@ -30,9 +30,12 @@ public class ClientMain {
 
             loginPanel.add(inputPanel, BorderLayout.CENTER);
 
-            int result = JOptionPane.showConfirmDialog(null, loginPanel, "Entrar", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            Object[] options = {"Iniciar"};
+            int result = JOptionPane.showOptionDialog(null, loginPanel, "Entrar",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
+                    null, options, options[0]);
 
-            if (result != JOptionPane.OK_OPTION) {
+            if (result != 0) {
                 System.exit(0);
             }
 
@@ -42,7 +45,7 @@ public class ClientMain {
             }
 
             try {
-                ChatManager manager = new ChatManager(clientName.trim());
+                ChatManager manager = new ChatManager(clientName.trim().toLowerCase());
                 ChatWindow window = new ChatWindow(manager);
 
                 manager.connect("localhost", 1099, window::displayMessage);
@@ -50,7 +53,7 @@ public class ClientMain {
                 window.setLocationRelativeTo(null);
                 window.setVisible(true);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Erro ao conectar ao servidor: " + e.getMessage(), "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Erro ao conectar ao servidor: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                 System.exit(1);
             }
         });

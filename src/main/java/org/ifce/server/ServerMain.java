@@ -1,6 +1,7 @@
 package org.ifce.server;
 
 import org.ifce.rmi.ChatServer;
+
 import java.rmi.registry.LocateRegistry;
 
 public class ServerMain {

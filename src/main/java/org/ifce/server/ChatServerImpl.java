@@ -12,86 +12,66 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
-
-    private final Connection connection;
     private final Session session;
-    private final Map<String, MessageConsumer> activeConsumers;
+    private final Map<String, MessageConsumer> consumers = new ConcurrentHashMap<>();
 
     public ChatServerImpl() throws Exception {
-        super();
-        this.activeConsumers = new ConcurrentHashMap<>();
-
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
         factory.setTrustAllPackages(true);
-
-        this.connection = factory.createConnection();
-        this.connection.start();
-        this.session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+        Connection conn = factory.createConnection();
+        conn.start();
+        session = conn.createSession(false, Session.CLIENT_ACKNOWLEDGE);
     }
 
     @Override
-    public void createQueue(String clientName) throws RemoteException {
+    public void createQueue(String name) throws RemoteException {
         try {
-            session.createQueue(clientName);
-        } catch (JMSException e) {
-            throw new RemoteException("Erro ao criar fila no ActiveMQ", e);
+            session.createQueue(name);
+        } catch (Exception e) {
+            throw new RemoteException("Erro", e);
         }
     }
 
     @Override
-    public void registerClient(String clientName, ChatClient client) throws RemoteException {
+    public void registerClient(String name, ChatClient client) throws RemoteException {
         try {
-            Queue queue = session.createQueue(clientName);
-            MessageConsumer consumer = session.createConsumer(queue);
-
-            consumer.setMessageListener(jmsMessage -> {
+            MessageConsumer consumer = session.createConsumer(session.createQueue(name));
+            consumer.setMessageListener(msg -> {
                 try {
-                    if (jmsMessage instanceof ObjectMessage objMsg) {
-                        Message chatMessage = (Message) objMsg.getObject();
-                        client.receiveMessage(chatMessage);
-                        jmsMessage.acknowledge();
-                    }
-                } catch (RemoteException e) {
+                    client.receiveMessage((Message) ((ObjectMessage) msg).getObject());
+                    msg.acknowledge();
+                } catch (Exception e) {
                     try {
-                        unregisterClient(clientName);
+                        unregisterClient(name);
                     } catch (Exception ignored) {
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
             });
-
-            activeConsumers.put(clientName, consumer);
-            System.out.println("Cliente conectado: " + clientName);
-        } catch (JMSException e) {
-            throw new RemoteException("Erro ao registrar cliente no ActiveMQ", e);
+            consumers.put(name, consumer);
+            System.out.println("Cliente conectado: " + name);
+        } catch (Exception e) {
+            throw new RemoteException("Erro", e);
         }
     }
 
     @Override
-    public void unregisterClient(String clientName) throws RemoteException {
-        MessageConsumer consumer = activeConsumers.remove(clientName);
-        if (consumer != null) {
-            try {
-                consumer.close();
-            } catch (JMSException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public void sendMessage(Message message) throws RemoteException {
+    public void unregisterClient(String name) throws RemoteException {
         try {
-            Queue queue = session.createQueue(message.receiver());
-            MessageProducer producer = session.createProducer(queue);
-            producer.setDeliveryMode(DeliveryMode.PERSISTENT);
+            MessageConsumer c = consumers.remove(name);
+            if (c != null) c.close();
+        } catch (Exception ignored) {
+        }
+    }
 
-            ObjectMessage objMsg = session.createObjectMessage(message);
-            producer.send(objMsg);
+    @Override
+    public void sendMessage(Message msg) throws RemoteException {
+        try {
+            MessageProducer producer = session.createProducer(session.createQueue(msg.receiver()));
+            producer.setDeliveryMode(DeliveryMode.PERSISTENT);
+            producer.send(session.createObjectMessage(msg));
             producer.close();
-        } catch (JMSException e) {
-            throw new RemoteException("Erro ao enviar mensagem via ActiveMQ", e);
+        } catch (Exception e) {
+            throw new RemoteException("Erro", e);
         }
     }
 }

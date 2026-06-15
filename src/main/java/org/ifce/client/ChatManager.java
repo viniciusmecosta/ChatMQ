@@ -4,75 +4,66 @@ import org.ifce.model.Message;
 import org.ifce.rmi.ChatServer;
 
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ChatManager {
-
-    private final String clientName;
-    private final List<String> contacts;
-    private final List<Message> pendingMessages;
+    private final String name;
+    private final List<String> contacts = new ArrayList<>();
+    private final List<Message> pending = new ArrayList<>();
     private ChatServer server;
-    private ChatClientImpl chatClient;
-    private boolean isOnline;
+    private ChatClientImpl client;
+    private boolean online = false;
 
-    public ChatManager(String clientName) {
-        this.clientName = clientName;
-        this.contacts = new ArrayList<>();
-        this.pendingMessages = new ArrayList<>();
-        this.isOnline = false;
+    public ChatManager(String name) {
+        this.name = name;
     }
 
-    public void connect(String host, int port, Consumer<Message> onMessageReceived) throws Exception {
-        Registry registry = LocateRegistry.getRegistry(host, port);
-        this.server = (ChatServer) registry.lookup("ChatServer");
-        this.chatClient = new ChatClientImpl(onMessageReceived);
-        this.server.createQueue(clientName);
+    public void connect(String host, int port, Consumer<Message> onMsg) throws Exception {
+        server = (ChatServer) LocateRegistry.getRegistry(host, port).lookup("ChatServer");
+        client = new ChatClientImpl(onMsg);
+        server.createQueue(name);
     }
 
     public void goOnline() throws Exception {
-        if (!isOnline && server != null) {
-            server.registerClient(clientName, chatClient);
-            isOnline = true;
-
-            for (Message msg : pendingMessages) {
-                server.sendMessage(msg);
+        if (!online && server != null) {
+            server.registerClient(name, client);
+            online = true;
+            for (Message m : pending) {
+                server.sendMessage(m);
             }
-            pendingMessages.clear();
+            pending.clear();
         }
     }
 
     public void goOffline() throws Exception {
-        if (isOnline && server != null) {
-            server.unregisterClient(clientName);
-            isOnline = false;
+        if (online && server != null) {
+            server.unregisterClient(name);
+            online = false;
         }
     }
 
-    public boolean sendMessage(String receiver, String content) throws Exception {
-        Message message = new Message(clientName, receiver.toLowerCase(), content, LocalDateTime.now());
-
-        if (isOnline && server != null) {
-            server.sendMessage(message);
+    public boolean sendMessage(String to, String content) throws Exception {
+        Message m = new Message(name, to.toLowerCase(), content, LocalDateTime.now());
+        if (online && server != null) {
+            server.sendMessage(m);
             return true;
-        } else {
-            pendingMessages.add(message);
-            return false;
+        }
+        pending.add(m);
+        return false;
+    }
+
+    public void addContact(String c) {
+        String n = c.toLowerCase();
+        if (!n.equals(name) && !contacts.contains(n)) {
+            contacts.add(n);
         }
     }
 
-    public void addContact(String contactName) {
-        String normalized = contactName.toLowerCase();
-        if (!normalized.equals(clientName) && !contacts.contains(normalized)) {
-            contacts.add(normalized);
-        }
-    }
-
-    public void removeContact(String contactName) {
-        contacts.remove(contactName.toLowerCase());
+    public void removeContact(String c) {
+        contacts.remove(c.toLowerCase());
     }
 
     public List<String> getContacts() {
@@ -80,10 +71,10 @@ public class ChatManager {
     }
 
     public boolean isOnline() {
-        return isOnline;
+        return online;
     }
 
     public String getClientName() {
-        return clientName;
+        return name;
     }
 }

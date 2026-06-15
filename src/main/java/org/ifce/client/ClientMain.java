@@ -1,59 +1,32 @@
 package org.ifce.client;
 
 import org.ifce.ui.ChatWindow;
-
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class ClientMain {
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
-        }
-
         SwingUtilities.invokeLater(() -> {
-            JPanel loginPanel = new JPanel(new BorderLayout(0, 10));
-            loginPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+            JPanel p = new JPanel(new BorderLayout());
+            p.add(new JLabel("Digite seu nome:"), BorderLayout.NORTH);
+            JTextField field = new JTextField(15);
+            p.add(field, BorderLayout.CENTER);
 
-            JLabel titleLabel = new JLabel("ChatMQ");
-            titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
-            loginPanel.add(titleLabel, BorderLayout.NORTH);
-
-            JPanel inputPanel = new JPanel(new BorderLayout(0, 5));
-            inputPanel.add(new JLabel("Digite seu nome:"), BorderLayout.NORTH);
-            JTextField usernameField = new JTextField();
-            usernameField.setPreferredSize(new Dimension(250, 35));
-            usernameField.setFont(new Font("SansSerif", Font.PLAIN, 14));
-            inputPanel.add(usernameField, BorderLayout.CENTER);
-
-            loginPanel.add(inputPanel, BorderLayout.CENTER);
-
-            Object[] options = {"Iniciar"};
-            int result = JOptionPane.showOptionDialog(null, loginPanel, "Entrar",
-                    JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
-                    null, options, options[0]);
-
-            if (result != 0) {
+            if (JOptionPane.showConfirmDialog(null, p, "Entrar", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != 0) {
                 System.exit(0);
             }
 
-            String clientName = usernameField.getText();
-            if (clientName == null || clientName.trim().isEmpty()) {
-                System.exit(0);
-            }
+            String name = field.getText().trim().toLowerCase();
+            if (name.isEmpty()) System.exit(0);
 
             try {
-                ChatManager manager = new ChatManager(clientName.trim().toLowerCase());
+                ChatManager manager = new ChatManager(name);
                 ChatWindow window = new ChatWindow(manager);
-
                 manager.connect("localhost", 1099, window::displayMessage);
-
                 window.setLocationRelativeTo(null);
                 window.setVisible(true);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Erro ao conectar ao servidor: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Erro: " + e.getMessage());
                 System.exit(1);
             }
         });

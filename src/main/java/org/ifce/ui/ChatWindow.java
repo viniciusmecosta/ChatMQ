@@ -130,7 +130,13 @@ public class ChatWindow extends JFrame {
         JTextField f = new JTextField(15);
         if (JOptionPane.showConfirmDialog(this, f, "Novo Contato", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == 0) {
             String n = f.getText().trim().toLowerCase();
-            if (!n.isEmpty() && !n.equals(manager.getClientName())) {
+            if (n.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "O nome do contato não pode ser vazio.");
+            } else if (n.equals(manager.getClientName())) {
+                JOptionPane.showMessageDialog(this, "Você não pode adicionar a si mesmo.");
+            } else if (manager.getContacts().contains(n)) {
+                JOptionPane.showMessageDialog(this, "Este contato já existe na sua lista.");
+            } else {
                 manager.addContact(n);
                 updateList();
             }

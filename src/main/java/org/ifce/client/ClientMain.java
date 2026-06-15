@@ -1,7 +1,6 @@
 package org.ifce.client;
 
 import org.ifce.ui.ChatWindow;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -18,7 +17,10 @@ public class ClientMain {
             }
 
             String name = field.getText().trim().toLowerCase();
-            if (name.isEmpty()) System.exit(0);
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "O nome de usuário não pode ser vazio.");
+                System.exit(0);
+            }
 
             try {
                 ChatManager manager = new ChatManager(name);

@@ -29,11 +29,14 @@ public class ChatWindow extends JFrame {
     public ChatWindow(ChatManager manager) {
         this.manager = manager;
         setTitle("ChatMQ - " + manager.getClientName());
-        setSize(800, 500);
+        setSize(900, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         JPanel sidebar = new JPanel(new BorderLayout());
         sidebar.setPreferredSize(new Dimension(250, 0));
+
+        btnStatus.setFont(new Font("SansSerif", Font.BOLD, 18));
+        btnStatus.setPreferredSize(new Dimension(0, 60));
         sidebar.add(btnStatus, BorderLayout.NORTH);
 
         list.setFixedCellHeight(40);
@@ -42,8 +45,11 @@ public class ChatWindow extends JFrame {
         sidebar.add(new JScrollPane(list), BorderLayout.CENTER);
 
         JPanel pnlBtns = new JPanel(new GridLayout(1, 2));
+        pnlBtns.setPreferredSize(new Dimension(0, 60));
         JButton btnAdd = createBtn("+", new Color(40, 167, 69));
         JButton btnRem = createBtn("-", new Color(220, 53, 69));
+        btnAdd.setFont(new Font("SansSerif", Font.BOLD, 28));
+        btnRem.setFont(new Font("SansSerif", Font.BOLD, 28));
         btnAdd.addActionListener(e -> addContact());
         btnRem.addActionListener(e -> remContact());
         pnlBtns.add(btnAdd);
@@ -54,7 +60,10 @@ public class ChatWindow extends JFrame {
         chatArea.add(new JPanel(), "EMPTY");
 
         JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setPreferredSize(new Dimension(0, 60));
+        input.setFont(new Font("SansSerif", Font.PLAIN, 18));
         input.setEnabled(false);
+        btnSend.setFont(new Font("SansSerif", Font.BOLD, 16));
         btnSend.setEnabled(false);
         input.addActionListener(e -> sendMsg());
         btnSend.addActionListener(e -> sendMsg());
@@ -62,9 +71,12 @@ public class ChatWindow extends JFrame {
         bottom.add(input, BorderLayout.CENTER);
         bottom.add(btnSend, BorderLayout.EAST);
 
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.add(chatArea, BorderLayout.CENTER);
+        rightPanel.add(bottom, BorderLayout.SOUTH);
+
         add(sidebar, BorderLayout.WEST);
-        add(chatArea, BorderLayout.CENTER);
-        add(bottom, BorderLayout.SOUTH);
+        add(rightPanel, BorderLayout.CENTER);
     }
 
     private JButton createBtn(String txt, Color c) {
@@ -197,16 +209,21 @@ public class ChatWindow extends JFrame {
             area.setOpaque(false);
             area.setLineWrap(true);
             area.setWrapStyleWord(true);
+            area.setFont(new Font("SansSerif", Font.PLAIN, 18));
 
             int w = SwingUtilities.computeStringWidth(area.getFontMetrics(area.getFont()), txt);
-            area.setPreferredSize(new Dimension(Math.min(w + 20, 300), area.getPreferredSize().height));
+            area.setPreferredSize(new Dimension(Math.min(w + 20, 350), area.getPreferredSize().height));
 
             JPanel foot = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
             foot.setOpaque(false);
-            foot.add(new JLabel(time.format(fmt)));
+
+            JLabel timeLabel = new JLabel(time.format(fmt));
+            timeLabel.setFont(new Font("SansSerif", Font.PLAIN, 10));
+            foot.add(timeLabel);
 
             if (isMe) {
                 JLabel status = new JLabel(sent ? ">" : "...");
+                status.setFont(new Font("SansSerif", Font.BOLD, 10));
                 if (!sent) pendingLabels.add(status);
                 foot.add(status);
             }

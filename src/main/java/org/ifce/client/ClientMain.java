@@ -27,6 +27,7 @@ public class ClientMain {
                 ChatWindow window = new ChatWindow(manager);
 
                 manager.configure("localhost", 1099, window::displayMessage);
+                window.toggleStatus();
 
                 window.setLocationRelativeTo(null);
                 window.setVisible(true);

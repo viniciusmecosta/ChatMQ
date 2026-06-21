@@ -117,7 +117,7 @@ public class ChatWindow extends JFrame {
         chatArea.add(scroll, c);
     }
 
-    private void toggleStatus() {
+    public void toggleStatus() {
         try {
             if (manager.isOnline()) {
                 manager.goOffline();

@@ -23,7 +23,7 @@ public class ChatManager {
         this.name = name;
     }
 
-    public void setup(String host, int port, Consumer<Message> onMsg) throws Exception {
+    public void configure(String host, int port, Consumer<Message> onMsg) throws Exception {
         this.host = host;
         this.port = port;
         this.client = new ChatClientImpl(onMsg);

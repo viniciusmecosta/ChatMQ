@@ -25,7 +25,11 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
 
     @Override
     public void createQueue(String name) throws RemoteException {
-        try { session.createQueue(name); } catch (Exception e) { throw new RemoteException("Erro", e); }
+        try {
+            session.createQueue(name);
+        } catch (Exception e) {
+            throw new RemoteException("Erro", e);
+        }
     }
 
     @Override
@@ -43,7 +47,9 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
                 jmsMsg.acknowledge();
             }
             consumer.close();
-        } catch (Exception e) { throw new RemoteException("Erro", e); }
+        } catch (Exception e) {
+            throw new RemoteException("Erro", e);
+        }
     }
 
     @Override
@@ -74,6 +80,8 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
             producer.send(session.createObjectMessage(msg));
             producer.close();
-        } catch (Exception e) { throw new RemoteException("Erro ao salvar no broker", e); }
+        } catch (Exception e) {
+            throw new RemoteException("Erro ao salvar no broker", e);
+        }
     }
 }

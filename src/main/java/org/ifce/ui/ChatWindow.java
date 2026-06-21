@@ -178,15 +178,16 @@ public class ChatWindow extends JFrame {
             renderMsg(selected, txt, true, sent, java.time.LocalDateTime.now());
             input.setText("");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro");
+            JOptionPane.showMessageDialog(this, "Erro ao enviar a mensagem.");
         }
     }
 
     public void displayMessage(Message m) {
         if (m.sender().equals(manager.getClientName())) return;
+
+        if (!manager.getContacts().contains(m.sender())) return;
+
         if (!panels.containsKey(m.sender())) {
-            manager.addContact(m.sender());
-            updateList();
             createChat(m.sender());
         }
         renderMsg(m.sender(), m.content(), false, true, m.timestamp());

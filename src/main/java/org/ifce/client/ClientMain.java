@@ -26,7 +26,7 @@ public class ClientMain {
                 ChatManager manager = new ChatManager(name);
                 ChatWindow window = new ChatWindow(manager);
 
-                manager.setup("localhost", 1099, window::displayMessage);
+                manager.configure("localhost", 1099, window::displayMessage);
 
                 window.setLocationRelativeTo(null);
                 window.setVisible(true);

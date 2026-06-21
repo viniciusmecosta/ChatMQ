@@ -16,21 +16,26 @@ public class ChatManager {
     private ChatServer server;
     private ChatClientImpl client;
     private boolean online = false;
+    private String host;
+    private int port;
 
     public ChatManager(String name) {
         this.name = name;
     }
 
-    public void connect(String host, int port, Consumer<Message> onMsg) throws Exception {
-        server = (ChatServer) LocateRegistry.getRegistry(host, port).lookup("ChatServer");
-        client = new ChatClientImpl(onMsg);
-        server.createQueue(name);
+    public void setup(String host, int port, Consumer<Message> onMsg) throws Exception {
+        this.host = host;
+        this.port = port;
+        this.client = new ChatClientImpl(onMsg);
     }
 
     public void goOnline() throws Exception {
-        if (!online && server != null) {
+        if (!online) {
+            server = (ChatServer) LocateRegistry.getRegistry(host, port).lookup("ChatServer");
+            server.createQueue(name);
             server.registerClient(name, client);
             online = true;
+
             for (Message m : pending) {
                 server.sendMessage(m);
             }
@@ -40,7 +45,10 @@ public class ChatManager {
 
     public void goOffline() throws Exception {
         if (online && server != null) {
-            server.unregisterClient(name);
+            try {
+                server.unregisterClient(name);
+            } catch (Exception ignored) {}
+            server = null;
             online = false;
         }
     }

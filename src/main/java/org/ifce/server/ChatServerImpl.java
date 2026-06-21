@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
     private final Session session;
-    private final Map<String, MessageConsumer> consumers = new ConcurrentHashMap<>();
+    private final Map<String, ChatClient> onlineClients = new ConcurrentHashMap<>();
 
     public ChatServerImpl() throws Exception {
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
@@ -25,53 +25,55 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
 
     @Override
     public void createQueue(String name) throws RemoteException {
-        try {
-            session.createQueue(name);
-        } catch (Exception e) {
-            throw new RemoteException("Erro", e);
-        }
+        try { session.createQueue(name); } catch (Exception e) { throw new RemoteException("Erro", e); }
     }
 
     @Override
     public void registerClient(String name, ChatClient client) throws RemoteException {
+        onlineClients.put(name, client);
+        System.out.println("Cliente online: " + name);
+
         try {
             MessageConsumer consumer = session.createConsumer(session.createQueue(name));
-            consumer.setMessageListener(msg -> {
-                try {
-                    client.receiveMessage((Message) ((ObjectMessage) msg).getObject());
-                    msg.acknowledge();
-                } catch (Exception e) {
-                    try {
-                        unregisterClient(name);
-                    } catch (Exception ignored) {
-                    }
+            jakarta.jms.Message jmsMsg;
+            while ((jmsMsg = consumer.receiveNoWait()) != null) {
+                if (jmsMsg instanceof ObjectMessage objMsg) {
+                    client.receiveMessage((Message) objMsg.getObject());
                 }
-            });
-            consumers.put(name, consumer);
-            System.out.println("Cliente conectado: " + name);
-        } catch (Exception e) {
-            throw new RemoteException("Erro", e);
-        }
+                jmsMsg.acknowledge();
+            }
+            consumer.close();
+        } catch (Exception e) { throw new RemoteException("Erro", e); }
     }
 
     @Override
     public void unregisterClient(String name) throws RemoteException {
-        try {
-            MessageConsumer c = consumers.remove(name);
-            if (c != null) c.close();
-        } catch (Exception ignored) {
-        }
+        onlineClients.remove(name);
+        System.out.println("Cliente offline: " + name);
     }
 
     @Override
     public void sendMessage(Message msg) throws RemoteException {
+        ChatClient receiver = onlineClients.get(msg.receiver());
+
+        if (receiver != null) {
+            try {
+                receiver.receiveMessage(msg);
+            } catch (RemoteException e) {
+                onlineClients.remove(msg.receiver());
+                sendToActiveMQ(msg);
+            }
+        } else {
+            sendToActiveMQ(msg);
+        }
+    }
+
+    private void sendToActiveMQ(Message msg) throws RemoteException {
         try {
             MessageProducer producer = session.createProducer(session.createQueue(msg.receiver()));
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
             producer.send(session.createObjectMessage(msg));
             producer.close();
-        } catch (Exception e) {
-            throw new RemoteException("Erro", e);
-        }
+        } catch (Exception e) { throw new RemoteException("Erro ao salvar no broker", e); }
     }
 }

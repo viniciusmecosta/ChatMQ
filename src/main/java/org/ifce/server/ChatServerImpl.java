@@ -40,7 +40,7 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         try {
             MessageConsumer consumer = session.createConsumer(session.createQueue(name));
             jakarta.jms.Message jmsMsg;
-            while ((jmsMsg = consumer.receiveNoWait()) != null) {
+            while ((jmsMsg = consumer.receive(300)) != null) {
                 if (jmsMsg instanceof ObjectMessage objMsg) {
                     client.receiveMessage((Message) objMsg.getObject());
                 }

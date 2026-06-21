@@ -183,14 +183,16 @@ public class ChatWindow extends JFrame {
     }
 
     public void displayMessage(Message m) {
-        if (m.sender().equals(manager.getClientName())) return;
+        SwingUtilities.invokeLater(() -> {
+            if (m.sender().equals(manager.getClientName())) return;
 
-        if (!panels.containsKey(m.sender())) {
-            manager.addContact(m.sender());
-            updateList();
-            createChat(m.sender());
-        }
-        renderMsg(m.sender(), m.content(), false, true, m.timestamp());
+            if (!panels.containsKey(m.sender())) {
+                manager.addContact(m.sender());
+                updateList();
+                createChat(m.sender());
+            }
+            renderMsg(m.sender(), m.content(), false, true, m.timestamp());
+        });
     }
 
     private void renderMsg(String contact, String txt, boolean isMe, boolean sent, java.time.LocalDateTime time) {

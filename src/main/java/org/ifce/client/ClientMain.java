@@ -1,6 +1,7 @@
 package org.ifce.client;
 
 import org.ifce.ui.ChatWindow;
+
 import javax.swing.*;
 import java.awt.*;
 

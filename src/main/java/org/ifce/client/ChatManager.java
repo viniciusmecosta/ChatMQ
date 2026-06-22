@@ -47,7 +47,8 @@ public class ChatManager {
         if (online && server != null) {
             try {
                 server.unregisterClient(name);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
             server = null;
             online = false;
         }
